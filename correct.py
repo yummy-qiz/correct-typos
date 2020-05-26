@@ -30,30 +30,44 @@ def abnormal_correction(LM, text, unigrams_file, bigrams_file, vocabulary_file):
             if t[j] in Latin:
                 continue
             else:
-                #找到所有可能单词
+                #找到所有可能单词，取前三个，然后排除掉cocabulary中不存在的，再根据上下文判断，或者贝叶斯判断。
+                #没有考虑短单词的情况
                 typos1 = t[j-1:j+1]
                 typos2 = t[j:j+2]
-                uni = open(Path(unigrams_file), "r")
-                bi = open(Path(bigrams_file), "r")
-                vocabualry = open(Path(vocabulary_file), "r")
-                dic = {}
-                for line in bi:
-                    line_ = re.split('\t', line)
-                    if typos1[0] == line_[0][0]:
-                        can1 = line_[0]
-                        prob1 = float(line_[2])
-                        bi_ = open(Path(bigrams_file), "r")
-                        for line1 in bi_:
-                            line_1 = re.split('\t', line1)
-                            if can1[1] == line_1[0][0] and typos2[1] == line_1[0][1]:
-                                can2 = line_1[0]
-                                prob2 = float(line_1[2])
-                                pro = prob1 + prob2
-                                dic_1 = {can1: pro}
-                                dic.update(dic_1)
+                Dic = edits(LM, typos1, typos2, unigrams_file, bigrams_file, vocabulary_file)
+                Dic = sorted(Dic.items(), key = lambda items:items[1])
+                print(Dic)
+
+
+
+def edits(LM, typos1, typos2, unigrams_file, bigrams_file, vocabulary_file):
+    uni = open(Path(unigrams_file), "r")
+    bi = open(Path(bigrams_file), "r")
+    vocabualry = open(Path(vocabulary_file), "r")
+    dic = {}
+    for line in bi:
+        line_ = re.split('\t', line)
+        if typos1[0] == line_[0][0]:
+            can1 = line_[0]
+            prob1 = float(line_[2])
+            bi_ = open(Path(bigrams_file), "r")
+            for line1 in bi_:
+                line_1 = re.split('\t', line1)
+                if can1[1] == line_1[0][0] and typos2[1] == line_1[0][1]:
+                    can2 = line_1[0]
+                    prob2 = float(line_1[2])
+                    for line2 in uni:
+                        line_2 = re.split('\t', line2)
+                        if can1[1] ==line_2[0]:
+                            prob3 = float(line_2[2])
+                            pro = (prob1 + prob2)*prob3
+                            dic_1 = {can1[1]: pro}
+                            dic.update(dic_1)
+    return dic
+
 
 
 
 if __name__ == "__main__":
     LM = open(Path(TRAIN_PATH + 'LM2.arpa'))
-    abnormal_correction(LM, "w¡ll be d¡str¡buted", "./data/unigrams.count", './data/bigrams.count', './data/vocabulary.count')
+    abnormal_correction(LM, "b¡tcoin address", "./data/unigrams.count", './data/bigrams.count', './data/vocabulary.count')
