@@ -14,7 +14,6 @@ import numpy as np
 
 
 TRAIN_PATH = '/home/qiz/correct_typos/data1/'
-PRIOR_WEIGHT = 1.25
 #CHARACTER_DISTANCE_LIMIT = 1
 WORD_DISTANCE_LIMIT = 4
 
@@ -30,23 +29,25 @@ def abnormal_correction(LM, text):
             if t[j] in Latin:
                 continue
             else:
-                #找到所有可能单词，取前三个，然后排除掉cocabulary中不存在的，再根据上下文判断，或者贝叶斯判断。
+                #找到所有可能单词，取前五个，然后排除掉cocabulary中不存在的，再根据上下文判断，或者贝叶斯判断。
                 typos1 = t[j-1:j+1]
                 typos2 = t[j:j+2]
                 Dic = getCandiate(typos1, typos2)
-                #Dic = sorted(Dic.items(), key = lambda items:items[1], reverse=True)
-                Dic = sorted(Dic.items(), key = lambda items:items[1])
-                #取可能性最大的前五
-                Dic = Dic[:5]
+                Dic = sorted(Dic.items(), key = lambda items:items[1])[:5]
+                #print(Dic)
                 can_word = []
                 for m in range(len(Dic)):
                     t = t.replace(t[j], Dic[m][0])
                     can_word.append(t)
+                print(can_word)
                 vocabulary = getVocabulary()
                 #删掉不存在词库中的词汇
                 for word_c in can_word:
                     if word_c not in vocabulary:
                         can_word.remove(word_c)
+                print(can_word)
+                a = get_max_prob(can_word, vocabulary)
+                print(a)
 
 
 def getVocabulary():
@@ -55,12 +56,13 @@ def getVocabulary():
         vocList = line.split('\t')
         vocabulary.append(vocList)
     return vocabulary
-"""
+
+
 def get_max_prob(can_word, vocabulary):
     for i in range(len(can_word)):
         if can_word[i] in vocabulary:
-            pass
-"""
+            return vocabulary
+
 
 def getCandiate(typos1, typos2):
     bi = open(os.path.join(Path(TRAIN_PATH, "bigrams.count")), "r")
